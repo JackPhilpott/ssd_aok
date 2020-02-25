@@ -10,8 +10,12 @@ source("scripts/functions/keys.R")
 # MONTHLY INPUT - ONLY PART OF SCRIPT WHICH SHOULD REALLY BE UPDATED ------
 
 output_final_folder<-"01_Settlement_Mapping"
-assessment_year_month<-"2020_02"
-filename_short<-paste0(assessment_year_month,"_New_Settlements_in_Kobo_Data.csv")
+assessment_year_month<- "2020_02"
+date_script_ran<-Sys.Date() %>% stringr::str_replace_all("-","_")
+
+
+
+filename_short<-paste0(date_script_ran,"_New_Settlements_in_Kobo_Data.csv")
 #UNLESS THE RPROJ IS MOVED TO THE DROPBOX THE AMOUNT OF "../../.." WILL HAVE TO CHANGE DEPENDING ON WHOS COMPUTER THIS IS STORED ON.
 dqm_folder_path<-"../../../../../Dropbox (SSD REACH)/REACH South Sudan upscale/12_AoK/06_AoK_Data_Analysis/10_Data_Quality_Monitoring/"
 
