@@ -41,5 +41,9 @@ aok_other_settlement<- aok_data %>%
          D.info_settlement_other) %>% arrange(A.base)
 
 
+aok_other_settlement$lat <- NA
+aok_other_settlement$long <- NA
 
-write.csv(aok_other_settlement,output_file_full_path)
+write.csv(aok_other_settlement,
+          output_file_full_path,
+          na = "")
