@@ -43,6 +43,9 @@ aok_other_settlement<- aok_data %>%
 
 aok_other_settlement$lat <- NA
 aok_other_settlement$long <- NA
+aok_other_settlement$action <- NA
+aok_other_settlement$comment <- NA
+
 
 write.csv(aok_other_settlement,
           output_file_full_path,
