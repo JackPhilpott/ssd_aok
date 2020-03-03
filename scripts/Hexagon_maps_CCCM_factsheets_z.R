@@ -6,14 +6,18 @@ library(lubridate)
 # LOAD IN DATA ------------------------------------------------------------
 
 # IF THE AOK PROCESS IS BUILT TO RUN SEQUENTIALLY WE DONT NECESSARILY HAVE TO LOAD THESE FROM THE DATA BECAUSE THEY WILL ALREADY BE IN MEMORY
-AOK <- read.csv("outputs/long_term_settlement_compiled/2020_01_REACH_SSD_AoK_LongTermSettlementData.csv", stringsAsFactors = FALSE, na.strings=c(""," "))
+# AOK <- read.csv("outputs/long_term_settlement_compiled/2020_01_REACH_SSD_AoK_LongTermSettlementData.csv", stringsAsFactors = FALSE, na.strings=c(""," "))
+# settlements<- read.csv("inputs/new_settlements/round_finals/2020_01_SSD_Settlements.csv", stringsAsFactors = FALSE, na.strings= c(""," "))
 
-settlements<- read.csv("inputs/new_settlements/round_finals/2020_01_SSD_Settlements.csv", stringsAsFactors = FALSE, na.strings= c(""," "))
+AOK <- read.csv("inputs/Hexagon/REACH_SSD_AoK_LongTermSettlementData.csv", stringsAsFactors = FALSE, na.strings=c(""," "))
+settlements<- read.csv("inputs/Hexagon/SSD_Settlements.csv", stringsAsFactors = FALSE, na.strings= c(""," "), fileEncoding="latin1")
+# settlements<- read.csv("inputs/Hexagon/SSD_Settlements.csv", stringsAsFactors = FALSE, na.strings= c(""," "), fileEncoding="UTF-8")
+
 
 #DUPLICATED SETTLEMENTS
 settlements %>% filter(NAMECOUNTY %in% settlements$NAMECOUNTY[which(duplicated(settlements$NAMECOUNTY))]) %>% arrange(NAMECOUNTY)
 
-Grids <- st_read(dsn = "inputs/GIS",layer ="Grids_info")
+Grids <- st_read(dsn = "inputs/Hexagon",layer ="Grids_info")
 
 #THESE COLUMNS SHOULD PROBABLY HAVE BEEN MADE AT AN EARLIER STAGE
 AOK<-AOK %>%
@@ -25,18 +29,21 @@ AOK<-AOK %>%
 
 
 
-
+# THIS IS USED TO REMOVE NA's AS THE LINE BELOW WOULDN'T WORK OTHERWISE
+settlements_narm <- settlements[rowSums(is.na(settlements))==0,]
 
 # MAKE SETTLEMENTS DATA SPATIAL AND PROJECT TO THE SAME CRS AS THE GRIDS
-settlements<- st_as_sf(settlements,coords= c("X", "Y"), crs=4326)
+settlements<- st_as_sf(settlements_narm,coords= c("X", "Y"), crs=4326)
 settlements<- st_transform(x = settlements, crs= 32636)
+
+
 
 
 Grids <- mutate(Grids, id_grid = as.numeric(rownames(Grids)))
 settlements <- mutate(settlements, id_sett = as.numeric(rownames(settlements)))
 
 
-#SPATIAL JOIN SETTLEMENT DATA TO GRIDD
+#SPATIAL JOIN SETTLEMENT DATA TO GRID
 setgrids <- st_join(settlements, Grids)
 which(duplicated(settlements$NAMECOUNTY))
 
@@ -134,7 +141,7 @@ grids_cccm <- left_join(grids_cccm , grids_threshold%>%
 
 write.csv(
   grids_cccm,
-  file = "longterm_Assessed_AoK_cccm.csv",
+  file = "AoK_cccm.csv",
   na = "NA",
   row.names = FALSE)
 
