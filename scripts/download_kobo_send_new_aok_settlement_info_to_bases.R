@@ -43,8 +43,11 @@ aok_other_settlement<- aok_data %>%
 
 aok_other_settlement$lat <- NA
 aok_other_settlement$long <- NA
+<<<<<<< HEAD
 aok_other_settlement$action <- NA
 aok_other_settlement$comment <- NA
+=======
+>>>>>>> 9d0e227de6123297a5570e794e78d3535505700a
 
 
 write.csv(aok_other_settlement,
