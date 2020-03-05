@@ -3,6 +3,13 @@ library(sf)
 library(lubridate)
 
 
+## A common problem that needed to fixed in this dataset is duplicates are common due to the amount of joining happening and
+## a single grid can lie between two counties, so when aggregating/grouping_by then it think there's unique values as they have
+## different counties, but it's still the same grid uuid. The below function is useful to see where the duplicates are coming in.
+# which(duplicated(df$uuid))
+
+
+
 # LOAD IN DATA ------------------------------------------------------------
 
 # IF THE AOK PROCESS IS BUILT TO RUN SEQUENTIALLY WE DONT NECESSARILY HAVE TO LOAD THESE FROM THE DATA BECAUSE THEY WILL ALREADY BE IN MEMORY
@@ -72,7 +79,6 @@ Assessed_current %>%
 Assessed_current <- Assessed_current %>% filter(!is.na(NAMECOUNTY))
 
 
-
 #let us check how many settlements and KIs we have per  grid
 
 grid_summary <- Assessed_current %>%
@@ -113,37 +119,73 @@ Assessed_AoK_cccm<-Assessed_AoK_cccm %>%
     flooded_shelter = ifelse(J.shelter_flooding == "yes",1,0)
   )
 
+Assessed_AoK_cccm$J.j2.idp_location
+Assessed_AoK_cccm$idp_sites
+
+
+
+# grids_cccm <- Assessed_AoK_cccm %>%
+#   st_drop_geometry() %>%
+#   select(State_id,id_grid,idp_sites, IDP_present, IDP_time_arrive, IDP_majority, food_inadequate,less_one_meal,
+#          hunger_severe_worse,wildfood_sick_alltime,skipping_days, flooded_shelter,month,year,date,D.info_state, D.info_county ) %>%
+#   group_by(id_grid, State_id,month,year,date,D.info_state, D.info_county) %>% summarise_all(funs(mean)) %>% ungroup()
+
+
 grids_cccm <- Assessed_AoK_cccm %>%
   st_drop_geometry() %>%
   select(State_id,id_grid,idp_sites, IDP_present, IDP_time_arrive, IDP_majority, food_inadequate,less_one_meal,
-         hunger_severe_worse,wildfood_sick_alltime,skipping_days, flooded_shelter,month,year,date,D.info_state, D.info_county )%>%
-  group_by(id_grid, State_id,month,year,date,D.info_state, D.info_county) %>% summarise_all(funs(mean)) %>% ungroup()
+         hunger_severe_worse,wildfood_sick_alltime,skipping_days, flooded_shelter,month,year,date) %>%
+  group_by(State_id) %>% summarise_all(funs(mean)) %>%
+  ungroup() %>% arrange(id_grid, State_id,month,year,date)
 
 
-#Proportion of assessed settlements reporting thalf or more  settlements population are IDPs and food access composite indicator
-grids_cccm<- grids_cccm %>%
+
+grids_cccm <- Assessed_AoK_cccm %>%
+  st_drop_geometry() %>%
+  select(State_id,id_grid,idp_sites, IDP_present, IDP_time_arrive, IDP_majority, food_inadequate,less_one_meal,
+         hunger_severe_worse,wildfood_sick_alltime,skipping_days, flooded_shelter,month,year,date) %>%
+  group_by(State_id) %>% summarise_all(funs(mean)) %>%
+  ungroup() %>% arrange(id_grid, State_id,month,year,date)
+
+
+
+
+
+#Proportion of assessed settlements reporting half or more settlements population are IDPs and food access composite indicator
+grids_cccm_fsl <- grids_cccm %>%
   mutate(
     fsl_composite = (food_inadequate +less_one_meal+hunger_severe_worse+wildfood_sick_alltime+skipping_days)/5
   )
 
+which(duplicated(grids_cccm_fsl$State_id))
+
+
+
+
+
+
 
 
 #Filter Grids with less than 2 KIs
-grids_cccm <- left_join(grids_cccm , grids_threshold%>%
-                          ungroup() %>%
+grids_cccm_filter <- left_join(grids_cccm_fsl , grids_threshold %>%
+                          group_by(State_id) %>% summarise_all(funs(mean)) %>%
                           select(-month, -year, -date) , by = c("State_id" = "State_id"))
 
+which(duplicated(grids_cccm_filter$State_id))
+
+
+
+## Could do with filtering out/removing the unnecessary columns (state, county etc.)
+grids_cccm_final <- grids_cccm_filter %>%
+  mutate(idp_sites = ifelse(idp_sites > 0,1,0))
+
+
+
 write.csv(
-  grids_cccm,
+  grids_cccm_final,
   file = "AoK_cccm.csv",
   na = "NA",
   row.names = FALSE)
-
-
-
-
-
-
 
 
 
